@@ -27,7 +27,7 @@ const SHEET_URL =
   '/gviz/tq?tqx=out:csv&gid=1739966826';
 
 /** Link do Google Forms */
-const FORMS_URL = 'https://forms.gle/XEZY6aoRWsP7zdMs7';
+const FORMS_URL = 'https://forms.gle/251VTCdDGMiwgZ2K9';
 
 /** Intervalo de auto-refresh em ms (5 minutos) */
 const REFRESH_INTERVAL = 5 * 60 * 1000;
