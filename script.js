@@ -11,6 +11,15 @@
  *  4. Charts       — renderização de todos os gráficos (Chart.js)
  *  5. Dashboard    — orquestração, KPIs, insights, tabela, ranking
  *  6. AutoRefresh  — ciclo automático de 5 minutos com countdown
+ *
+ * CORREÇÕES APLICADAS:
+ *  - [CORS] Múltiplas estratégias de fetch em cascata:
+ *      1. Fetch direto via /pub?output=csv (planilha publicada, sem CORS)
+ *      2. allorigins.win como proxy de fallback caso a rede bloqueie
+ *  - [BUG] escolaridade: && booleano → countBoth() para dois termos
+ *  - [BUG] reacao: && booleano → countBoth() com dois critérios
+ *  - [DEAD CODE] setInterval vazio removido do AutoRefresh
+ *  - [UX] Mensagem de status detalhada por estratégia de fetch
  * ═══════════════════════════════════════════════════════════════
  */
 
@@ -20,11 +29,30 @@
    CONSTANTES GLOBAIS
 ───────────────────────────────────────────────────────────── */
 
-/** URL pública do Google Sheets (gviz/tq — sem CORS para sheets públicos) */
-const SHEET_URL =
-  'https://docs.google.com/spreadsheets/d/' +
-  '1QMZHkz0FaebfUh3sR20YLaE2YVkxfNQYSP5QyJ0mglg' +
-  '/gviz/tq?tqx=out:csv&gid=1739966826';
+/**
+ * Planilha publicada na web via Arquivo → Publicar na web → CSV.
+ * Este endpoint é público por design, sem autenticação, sem CORS.
+ * Sem necessidade de proxy — o browser acessa diretamente.
+ *
+ * Como foi gerado:
+ *   URL pubhtml: .../pub?output=html  →  trocado por ?output=csv
+ *   GID da aba de respostas: omitido (primeira aba) ou explícito.
+ *
+ * Se o Forms vincula as respostas em outra aba, acrescente:
+ *   &gid=NUMERO_DA_ABA
+ */
+const PUBLISHED_ID =
+  '2PACX-1vSNocodAsPzOTQ7Q1sHhgmLw6hVPvACDoNn9DrPpokqhQxddbiyPnuZoFNX1WoCV7YiYya3gXuZP_iA';
+
+const SHEET_URL_DIRECT =
+  `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_ID}/pub?output=csv`;
+
+/**
+ * Fallback: tenta a mesma URL com o proxy allorigins caso o fetch
+ * direto falhe por qualquer razão de rede/ambiente.
+ */
+const SHEET_URL_PROXY =
+  `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_URL_DIRECT)}`;
 
 /** Link do Google Forms */
 const FORMS_URL = 'https://forms.gle/251VTCdDGMiwgZ2K9';
@@ -41,22 +69,18 @@ const REFRESH_INTERVAL = 5 * 60 * 1000;
   const menu     = document.getElementById('navMenu');
   const navLinks = document.querySelectorAll('.nav-link');
 
-  /* Navbar sombra no scroll */
   window.addEventListener('scroll', () => {
     navbar.classList.toggle('scrolled', window.scrollY > 60);
   }, { passive: true });
 
-  /* Toggle mobile */
   toggle.addEventListener('click', () => {
     const open = menu.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
   });
 
-  /* Fecha ao clicar em link */
   navLinks.forEach(l => l.addEventListener('click', () =>
     menu.classList.remove('open')));
 
-  /* Active link por seção visível */
   const sections = document.querySelectorAll('section[id]');
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
@@ -82,7 +106,8 @@ const REFRESH_INTERVAL = 5 * 60 * 1000;
       const base = parseFloat(
         getComputedStyle(e.target).transitionDelay
       ) * 1000 || 0;
-      e.target.style.transitionDelay = (base + siblings.indexOf(e.target) * 60) + 'ms';
+      e.target.style.transitionDelay =
+        (base + siblings.indexOf(e.target) * 60) + 'ms';
       e.target.classList.add('visible');
       io.unobserve(e.target);
     });
@@ -96,8 +121,7 @@ const REFRESH_INTERVAL = 5 * 60 * 1000;
 ───────────────────────────────────────────────────────────── */
 const DataLayer = (() => {
 
-  /* Cache local das últimas respostas */
-  let _cache = [];
+  let _cache   = [];
   let _headers = [];
   let _colMap  = {};
 
@@ -125,16 +149,18 @@ const DataLayer = (() => {
     return rows;
   }
 
-  /* ── Detecção inteligente de colunas por palavras-chave ── */
+  /* ── Normalização de string para comparação ── */
+  function normalizeStr(s) {
+    return (s || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  /* ── Detecção de colunas por palavras-chave ── */
   function findCol(headers, keywords) {
-    const h = headers.map(x => x.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-    const idx = h.findIndex(col =>
-      keywords.some(kw => col.includes(
-        kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      ))
+    const h = headers.map(x => normalizeStr(x));
+    return h.findIndex(col =>
+      keywords.some(kw => col.includes(normalizeStr(kw)))
     );
-    return idx;
   }
 
   function buildColMap(headers) {
@@ -151,7 +177,6 @@ const DataLayer = (() => {
       substituicao: findCol(headers, ['substituiu','alternativa mais sustentavel','alternativa mais sustentável']),
       limpeza:      findCol(headers, ['condicoes de limpeza','condições de limpeza','avalia as condicoes','limpeza e o descarte']),
       descarteIrr:  findCol(headers, ['descarte irregular','observou pontos']),
-      /* Grade Q12 — impactos */
       preocAgua:    findCol(headers, ['agua potavel','água potável']),
       preocAlim:    findCol(headers, ['alimentos','frutos do mar','consumo humano']),
       preocSaude:   findCol(headers, ['saude humana','saúde humana','hormonios','hormônios']),
@@ -164,7 +189,6 @@ const DataLayer = (() => {
     };
   }
 
-  /* ── Linha → objeto tipado ── */
   function rowToObj(row, colMap) {
     const g = (k) => {
       const i = colMap[k];
@@ -181,7 +205,7 @@ const DataLayer = (() => {
       reciclagem:   g('reciclagem'),
       ecoponto:     g('ecoponto'),
       substituicao: g('substituicao'),
-      limpeza_raw:  g('limpeza'),        /* valor numérico 1-5 */
+      limpeza_raw:  g('limpeza'),
       descarteIrr:  g('descarteIrr'),
       preocAgua:    g('preocAgua'),
       preocAlim:    g('preocAlim'),
@@ -189,18 +213,60 @@ const DataLayer = (() => {
       preocAnimais: g('preocAnimais'),
       preocEcossist:g('preocEcossist'),
       preocEconom:  g('preocEconom'),
-      acoesEdu_raw: g('acoesEdu'),       /* valor numérico 1-5 */
+      acoesEdu_raw: g('acoesEdu'),
       mudanca:      g('mudanca'),
       comentarios:  g('comentarios'),
     };
   }
 
-  /* ── Fetch principal ── */
-  async function fetch_() {
-    const resp = await fetch(SHEET_URL, { cache: 'no-store' });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+  /* ── Estratégias de fetch em cascata ── */
+  async function tryFetch(url, label) {
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`[${label}] HTTP ${resp.status}`);
     const text = await resp.text();
-    const rows  = parseCSV(text);
+    /* Detecta redirecionamento para página de login do Google */
+    if (text.includes('accounts.google.com') || text.includes('ServiceLogin')) {
+      throw new Error(`[${label}] Redirecionado para login — planilha privada`);
+    }
+    /* Detecta resposta HTML em vez de CSV */
+    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+      throw new Error(`[${label}] Resposta HTML recebida em vez de CSV`);
+    }
+    return text;
+  }
+
+  async function fetch_() {
+    let text = null;
+    const errors = [];
+
+    /* Estratégia 1: fetch direto — planilha publicada, sem CORS */
+    try {
+      Dashboard.setStatus('Conectando ao Google Sheets…', false);
+      text = await tryFetch(SHEET_URL_DIRECT, 'direto');
+      console.info('[DataLayer] Fetch direto bem-sucedido.');
+    } catch (e1) {
+      errors.push(e1.message);
+      console.warn('[DataLayer] Fetch direto falhou:', e1.message);
+
+      /* Estratégia 2: proxy allorigins.win como fallback de rede */
+      try {
+        Dashboard.setStatus('Usando proxy de fallback…', false);
+        text = await tryFetch(SHEET_URL_PROXY, 'allorigins');
+        console.info('[DataLayer] Fetch via proxy bem-sucedido.');
+      } catch (e2) {
+        errors.push(e2.message);
+        console.warn('[DataLayer] Fetch via proxy falhou:', e2.message);
+      }
+    }
+
+    if (!text) {
+      throw new Error(
+        'Não foi possível carregar os dados. Verifique sua conexão e recarregue a página. ' +
+        `Detalhes: ${errors.join(' | ')}`
+      );
+    }
+
+    const rows = parseCSV(text);
     if (!rows.length) return [];
 
     _headers = rows[0];
@@ -217,21 +283,20 @@ const DataLayer = (() => {
 })();
 
 /* ─────────────────────────────────────────────────────────────
-   4. CHARTS  —  Toda a lógica de renderização Chart.js
+   4. CHARTS
 ───────────────────────────────────────────────────────────── */
 const Charts = (() => {
   const instances = {};
 
-  /* Paleta */
   const C = {
-    teal:    '#0e9f70', tealL:  '#4ecfa0', tealP: 'rgba(78,207,160,.12)',
-    amber:   '#f59e0b', amberL: '#fcd34d',
-    red:     '#f87171', redL:   '#fca5a5',
-    green:   '#34d399', greenL: '#6ee7b7',
-    purple:  '#a78bfa', blue:   '#60a5fa',
-    orange:  '#fb923c', pink:   '#f472b6',
-    grid:    'rgba(255,255,255,.06)',
-    axisC:   'rgba(255,255,255,.4)',
+    teal:   '#0e9f70', tealL:  '#4ecfa0', tealP: 'rgba(78,207,160,.12)',
+    amber:  '#f59e0b', amberL: '#fcd34d',
+    red:    '#f87171', redL:   '#fca5a5',
+    green:  '#34d399', greenL: '#6ee7b7',
+    purple: '#a78bfa', blue:   '#60a5fa',
+    orange: '#fb923c', pink:   '#f472b6',
+    grid:   'rgba(255,255,255,.06)',
+    axisC:  'rgba(255,255,255,.4)',
   };
 
   function applyDefaults() {
@@ -249,25 +314,22 @@ const Charts = (() => {
       padding: 10,
       cornerRadius: 8,
     });
-    Chart.defaults.plugins.legend.labels.boxWidth  = 12;
-    Chart.defaults.plugins.legend.labels.padding   = 14;
-    Chart.defaults.plugins.legend.labels.color     = C.axisC;
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.padding  = 14;
+    Chart.defaults.plugins.legend.labels.color    = C.axisC;
   }
 
   function destroy(id) {
     if (instances[id]) { instances[id].destroy(); delete instances[id]; }
   }
 
-  function destroyAll() {
-    Object.keys(instances).forEach(destroy);
-  }
+  function destroyAll() { Object.keys(instances).forEach(destroy); }
 
   const scaleXY = {
     x: { grid: { color: C.grid }, ticks: { color: C.axisC } },
     y: { grid: { color: C.grid }, ticks: { color: C.axisC }, beginAtZero: true },
   };
 
-  /* Doughnut */
   function doughnut(id, labels, data, colors) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -282,7 +344,6 @@ const Charts = (() => {
     });
   }
 
-  /* Barras verticais */
   function bar(id, labels, data, color, opts = {}) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -299,7 +360,6 @@ const Charts = (() => {
     });
   }
 
-  /* Barras horizontais */
   function barH(id, labels, data, color, opts = {}) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -320,7 +380,6 @@ const Charts = (() => {
     });
   }
 
-  /* Linha */
   function line(id, labels, data) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -344,7 +403,6 @@ const Charts = (() => {
     });
   }
 
-  /* Barras agrupadas (grade Q12) */
   function barGrouped(id, labels, datasets) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -369,27 +427,47 @@ const Charts = (() => {
 })();
 
 /* ─────────────────────────────────────────────────────────────
-   5. DASHBOARD  —  Orquestração, KPIs, Insights, Tabela
+   5. DASHBOARD
 ───────────────────────────────────────────────────────────── */
 const Dashboard = (() => {
 
-  /* ── Utilitários de contagem ── */
-  function count(arr, key, partial) {
-    const p = norm(partial);
-    return arr.filter(r => norm(r[key]).includes(p)).length;
-  }
+  /* ── Normalização ── */
   function norm(s) {
     return (s || '').toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
+
+  /**
+   * Conta registros onde o campo `key` contém `partial`.
+   */
+  function count(arr, key, partial) {
+    const p = norm(partial);
+    return arr.filter(r => norm(r[key]).includes(p)).length;
+  }
+
+  /**
+   * CORREÇÃO: conta registros onde o campo `key` contém
+   * AMBOS os termos `termA` E `termB` simultaneamente.
+   * Substitui o padrão bugado `count(arr,k,'a') && count(arr,k,'b')`
+   * que retornava booleano coercido (0 ou 1) em vez de contagem real.
+   */
+  function countBoth(arr, key, termA, termB) {
+    const a = norm(termA), b = norm(termB);
+    return arr.filter(r => {
+      const v = norm(r[key]);
+      return v.includes(a) && v.includes(b);
+    }).length;
+  }
+
   function pct(n, t) { return t ? Math.round(n / t * 100) + '%' : '—'; }
+
   function avg(arr, key) {
     const vals = arr.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
     if (!vals.length) return null;
     return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
   }
 
-  /* ── Parsing de fontes (múltipla escolha separada por vírgula/ponto-vírgula) ── */
+  /* ── Fontes (múltipla escolha) ── */
   function countFontes(arr) {
     const map = {};
     arr.forEach(r => {
@@ -397,7 +475,6 @@ const Dashboard = (() => {
       s.split(/[;,\n]/).forEach(f => {
         const t = f.trim();
         if (t && !norm(t).includes('nao consigo') && !norm(t).includes('não consigo')) {
-          /* Abreviar para exibição */
           const key = t.length > 50 ? t.substring(0, 48) + '…' : t;
           map[key] = (map[key] || 0) + 1;
         }
@@ -406,26 +483,15 @@ const Dashboard = (() => {
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }
 
-  /* ── Parsing de grade Q12 ── */
-  function countPreocupacao(arr, key) {
-    return {
-      muito:  count(arr, key, 'muito preocupante'),
-      medio:  count(arr, key, 'moderadamente'),
-      pouco:  count(arr, key, 'pouco'),
-    };
-  }
-
   /* ── Evolução temporal ── */
   function buildTimeline(arr) {
     const map = {};
     arr.forEach(r => {
       if (!r.timestamp) return;
-      /* Google Forms timestamp: "DD/MM/YYYY HH:MM:SS" ou ISO */
       const parts = r.timestamp.split(/[\s/:]/).filter(Boolean);
       let dateKey;
       if (parts.length >= 3) {
-        /* DD/MM/YYYY */
-        const [d, m, y] = parts;
+        const [d, m] = parts;
         dateKey = `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
       } else {
         dateKey = r.timestamp.substring(0, 10);
@@ -433,28 +499,22 @@ const Dashboard = (() => {
       map[dateKey] = (map[dateKey] || 0) + 1;
     });
     const sorted = Object.entries(map).sort((a, b) => {
-      /* Ordenar por data */
-      const parse = s => {
-        const [d, m] = s.split('/');
-        return parseInt(m) * 100 + parseInt(d);
-      };
+      const parse = s => { const [d, m] = s.split('/'); return parseInt(m) * 100 + parseInt(d); };
       return parse(a[0]) - parse(b[0]);
     });
-    /* Acumulado */
     let cum = 0;
     return {
       labels: sorted.map(x => x[0]),
       data:   sorted.map(x => { cum += x[1]; return cum; }),
-      daily:  sorted.map(x => x[1]),
     };
   }
 
-  /* ── KPI cards ── */
+  /* ── KPIs ── */
   function renderKPIs(data) {
     const total = data.length;
     const nDesc = count(data, 'conhecimento', 'nunca tinha') +
                   count(data, 'conhecimento', 'nunca ouvi');
-    const nRecicla = count(data, 'reciclagem', 'sempre');
+    const nRecicla     = count(data, 'reciclagem', 'sempre');
     const mediaLimpeza = avg(data, 'limpeza_raw');
 
     setText('kpiTotal',      total || '—');
@@ -463,15 +523,15 @@ const Dashboard = (() => {
     setText('kpiLimpeza',    mediaLimpeza ? mediaLimpeza + '/5' : '—');
   }
 
-  /* ── Insights automáticos ── */
+  /* ── Insights ── */
   function renderInsights(data) {
     const total = data.length;
     if (!total) return;
 
-    const nDesc    = count(data,'conhecimento','nunca');
-    const nRec     = count(data,'reciclagem','sempre');
-    const nPol     = count(data,'descarteIrr','sim, ha pontos') +
-                     count(data,'descarteIrr','sim, há pontos');
+    const nDesc  = count(data, 'conhecimento', 'nunca');
+    const nRec   = count(data, 'reciclagem',   'sempre');
+    const nPol   = count(data, 'descarteIrr', 'sim, ha pontos') +
+                   count(data, 'descarteIrr', 'sim, há pontos');
     const mediaAco = avg(data, 'acoesEdu_raw');
 
     const bar = document.getElementById('insightBar');
@@ -489,77 +549,81 @@ const Dashboard = (() => {
     );
   }
 
-  /* ── Todos os gráficos ── */
+  /* ── Gráficos ── */
   function renderCharts(data) {
     Charts.applyDefaults();
     Charts.destroyAll();
 
-    const P = Charts; /* alias */
-    const C_TEAL = '#0e9f70', C_TEALLL = '#4ecfa0',
-          C_AMBER = '#f59e0b', C_RED = '#f87171',
-          C_GREEN = '#34d399', C_PURPLE = '#a78bfa',
-          C_BLUE = '#60a5fa', C_ORANGE = '#fb923c',
-          C_PINK = '#f472b6';
+    const P = Charts;
+    const C_TEAL   = '#0e9f70', C_TEALLL = '#4ecfa0',
+          C_AMBER  = '#f59e0b', C_RED    = '#f87171',
+          C_GREEN  = '#34d399', C_PURPLE = '#a78bfa',
+          C_BLUE   = '#60a5fa', C_ORANGE = '#fb923c',
+          C_PINK   = '#f472b6';
 
-    /* 1 — Linha: evolução temporal */
+    /* Linha: evolução temporal */
     const tl = buildTimeline(data);
     if (tl.labels.length) {
       P.line('chartTempo', tl.labels, tl.data);
     }
 
-    /* 2 — Rosca: conhecimento prévio */
+    /* Rosca: conhecimento prévio */
     P.doughnut('chartConhecimento',
       ['Conhece bem','Já ouviu, mas superficialmente','Nunca tinha ouvido falar'],
       [
-        count(data,'conhecimento','conheco bem') + count(data,'conhecimento','conheço bem'),
-        count(data,'conhecimento','ja ouvi') + count(data,'conhecimento','já ouvi'),
-        count(data,'conhecimento','nunca tinha') + count(data,'conhecimento','nunca ouvi'),
+        count(data, 'conhecimento', 'conheco bem') + count(data, 'conhecimento', 'conheço bem'),
+        count(data, 'conhecimento', 'ja ouvi')     + count(data, 'conhecimento', 'já ouvi'),
+        count(data, 'conhecimento', 'nunca tinha') + count(data, 'conhecimento', 'nunca ouvi'),
       ],
       [C_TEAL, C_AMBER, C_RED]
     );
 
-    /* 3 — Rosca: reciclagem */
+    /* Rosca: reciclagem */
     P.doughnut('chartReciclagem',
       ['Sempre','Frequentemente','Às vezes','Raramente','Nunca'],
       [
-        count(data,'reciclagem','sempre'),
-        count(data,'reciclagem','frequentemente'),
-        count(data,'reciclagem','as vezes') + count(data,'reciclagem','às vezes'),
-        count(data,'reciclagem','raramente'),
-        count(data,'reciclagem','nunca'),
+        count(data, 'reciclagem', 'sempre'),
+        count(data, 'reciclagem', 'frequentemente'),
+        count(data, 'reciclagem', 'as vezes') + count(data, 'reciclagem', 'às vezes'),
+        count(data, 'reciclagem', 'raramente'),
+        count(data, 'reciclagem', 'nunca'),
       ],
       [C_TEAL, C_TEALLL, C_AMBER, C_ORANGE, C_RED]
     );
 
-    /* 4 — Barras: faixa etária */
+    /* Barras: faixa etária */
     P.bar('chartIdade',
       ['< 18','18–25','26–35','36–50','> 50'],
       [
-        count(data,'idade','menos de 18'),
-        count(data,'idade','18 a 25'),
-        count(data,'idade','26 a 35'),
-        count(data,'idade','36 a 50'),
-        count(data,'idade','mais de 50'),
+        count(data, 'idade', 'menos de 18'),
+        count(data, 'idade', '18 a 25'),
+        count(data, 'idade', '26 a 35'),
+        count(data, 'idade', '36 a 50'),
+        count(data, 'idade', 'mais de 50'),
       ],
       C_PURPLE
     );
 
-    /* 5 — Barras: escolaridade */
+    /*
+     * CORREÇÃO — Escolaridade:
+     * Antes: `count(arr,'escolaridade','superior') && count(arr,'escolaridade','incompleto')`
+     * retornava 0 ou 1 (booleano) porque && em JS retorna o operando, não soma.
+     * Agora: `countBoth()` filtra por dois termos simultaneamente, retornando
+     * a contagem real de registros que contêm ambas as palavras.
+     */
     P.bar('chartEscolaridade',
       ['Fund.','Médio','Sup. Inc.','Sup. Comp.','Pós'],
       [
-        count(data,'escolaridade','fundamental'),
-        count(data,'escolaridade','medio') + count(data,'escolaridade','médio'),
-        count(data,'escolaridade','superior') &&
-          count(data,'escolaridade','incompleto'),
-        count(data,'escolaridade','superior') &&
-          count(data,'escolaridade','completo'),
-        count(data,'escolaridade','pos') + count(data,'escolaridade','pós'),
+        count(data,     'escolaridade', 'fundamental'),
+        count(data,     'escolaridade', 'medio') + count(data, 'escolaridade', 'médio'),
+        countBoth(data, 'escolaridade', 'superior', 'incompleto'),
+        countBoth(data, 'escolaridade', 'superior', 'completo'),
+        count(data,     'escolaridade', 'pos') + count(data, 'escolaridade', 'pós'),
       ],
       C_BLUE
     );
 
-    /* 6 — Barras horiz: fontes conhecidas (Q5 múltipla) */
+    /* Barras horiz: fontes conhecidas */
     const fontesData = countFontes(data);
     if (fontesData.length) {
       P.barH('chartFontes',
@@ -569,70 +633,84 @@ const Dashboard = (() => {
       );
     }
 
-    /* 7 — Rosca: reação à informação de saúde */
+    /*
+     * CORREÇÃO — Reação:
+     * Antes: `count(arr,'reacao','ja sabia') && count(arr,'reacao','preocup')` → booleano.
+     * Agora: `countBoth()` retorna contagem real de respostas com ambos os termos.
+     */
     P.doughnut('chartReacao',
-      ['Já sabia, muito preocupado(a)','Já sabia, pouco preocupado(a)','Não sabia, ficou preocupado(a)','Não sabia, não surpreendeu','Não acredita'],
       [
-        count(data,'reacao','ja sabia') && count(data,'reacao','preocup'),
-        count(data,'reacao','ja sabia') && count(data,'reacao','certo'),
-        count(data,'reacao','nao sabia') && count(data,'reacao','preocupado'),
-        count(data,'reacao','nao surpreendeu') + count(data,'reacao','não surpreendeu'),
-        count(data,'reacao','nao acredito') + count(data,'reacao','não acredito'),
+        'Já sabia, muito preocupado(a)',
+        'Já sabia, pouco preocupado(a)',
+        'Não sabia, ficou preocupado(a)',
+        'Não sabia, não surpreendeu',
+        'Não acredita',
+      ],
+      [
+        countBoth(data, 'reacao', 'ja sabia',  'preocupado'),
+        countBoth(data, 'reacao', 'ja sabia',  'certo'),
+        countBoth(data, 'reacao', 'nao sabia', 'preocupado'),
+        count(data,     'reacao', 'nao surpreendeu') + count(data, 'reacao', 'não surpreendeu'),
+        count(data,     'reacao', 'nao acredito')    + count(data, 'reacao', 'não acredito'),
       ],
       [C_RED, C_ORANGE, C_AMBER, C_TEALLL, C_PURPLE]
     );
 
-    /* 8 — Barras: uso de ecoponto */
+    /* Barras: uso de ecoponto */
     P.bar('chartEcoponto',
       ['Usa regularmente','Usa raramente','Conhece, nunca usou','Não sabia','Não há próximo'],
       [
-        count(data,'ecoponto','regularmente'),
-        count(data,'ecoponto','raramente'),
-        count(data,'ecoponto','nunca utilizei') + count(data,'ecoponto','nunca usei'),
-        count(data,'ecoponto','nao sabia') + count(data,'ecoponto','não sabia'),
-        count(data,'ecoponto','nao ha') + count(data,'ecoponto','não há'),
+        count(data, 'ecoponto', 'regularmente'),
+        count(data, 'ecoponto', 'raramente'),
+        count(data, 'ecoponto', 'nunca utilizei') + count(data, 'ecoponto', 'nunca usei'),
+        count(data, 'ecoponto', 'nao sabia')      + count(data, 'ecoponto', 'não sabia'),
+        count(data, 'ecoponto', 'nao ha')         + count(data, 'ecoponto', 'não há'),
       ],
       C_ORANGE
     );
 
-    /* 9 — Rosca: descarte irregular */
+    /* Rosca: descarte irregular */
     P.doughnut('chartDescarteIrr',
       ['Sim, pontos frequentes','Sim, casos isolados','Não observei','Não presto atenção'],
       [
-        count(data,'descarteIrr','frequentes') + count(data,'descarteIrr','ha pontos') + count(data,'descarteIrr','há pontos'),
-        count(data,'descarteIrr','isolados'),
-        count(data,'descarteIrr','nao observei') + count(data,'descarteIrr','não observei'),
-        count(data,'descarteIrr','atencao') + count(data,'descarteIrr','atenção'),
+        count(data, 'descarteIrr', 'frequentes') +
+          count(data, 'descarteIrr', 'ha pontos') +
+          count(data, 'descarteIrr', 'há pontos'),
+        count(data, 'descarteIrr', 'isolados'),
+        count(data, 'descarteIrr', 'nao observei') + count(data, 'descarteIrr', 'não observei'),
+        count(data, 'descarteIrr', 'atencao')      + count(data, 'descarteIrr', 'atenção'),
       ],
       [C_RED, C_ORANGE, C_TEAL, C_TEALLL]
     );
 
-    /* 10 — Barras: postura ante mudança */
+    /* Barras: postura ante mudança */
     P.bar('chartMudanca',
       ['Adotaria imediatamente','Provavelmente sim','Talvez','Provavelmente não','Não tem interesse'],
       [
-        count(data,'mudanca','imediatamente'),
-        count(data,'mudanca','provavelmente') && !count(data,'mudanca','nao'),
-        count(data,'mudanca','talvez'),
-        count(data,'mudanca','provavelmente nao') + count(data,'mudanca','provavelmente não'),
-        count(data,'mudanca','nao tenho interesse') + count(data,'mudanca','não tenho interesse'),
+        count(data,     'mudanca', 'imediatamente'),
+        countBoth(data, 'mudanca', 'provavelmente', 'sim'),
+        count(data,     'mudanca', 'talvez'),
+        countBoth(data, 'mudanca', 'provavelmente', 'nao') +
+          countBoth(data, 'mudanca', 'provavelmente', 'não'),
+        count(data,     'mudanca', 'nao tenho interesse') +
+          count(data,   'mudanca', 'não tenho interesse'),
       ],
       C_GREEN
     );
 
-    /* 11 — Barras agrupadas: preocupações por impacto (Q12) */
+    /* Barras agrupadas: preocupações Q12 */
     const impLabels = ['Água potável','Alimentos','Saúde humana','Animais marinhos','Ecossistemas','Economia/Pesca'];
     const impKeys   = ['preocAgua','preocAlim','preocSaude','preocAnimais','preocEcossist','preocEconom'];
     const muito = impKeys.map(k => count(data, k, 'muito preocupante'));
     const medio = impKeys.map(k => count(data, k, 'moderadamente'));
     const pouco = impKeys.map(k => count(data, k, 'pouco'));
     P.barGrouped('chartPreocupacao', impLabels, [
-      { label: 'Muito preocupante',        data: muito, backgroundColor: C_RED + 'bb',    borderColor: C_RED,    borderWidth: 1, borderRadius: 4 },
-      { label: 'Moderadamente preocupante',data: medio, backgroundColor: C_AMBER + 'bb',  borderColor: C_AMBER,  borderWidth: 1, borderRadius: 4 },
+      { label: 'Muito preocupante',         data: muito, backgroundColor: C_RED    + 'bb', borderColor: C_RED,    borderWidth: 1, borderRadius: 4 },
+      { label: 'Moderadamente preocupante', data: medio, backgroundColor: C_AMBER  + 'bb', borderColor: C_AMBER,  borderWidth: 1, borderRadius: 4 },
       { label: 'Pouco preocupante',         data: pouco, backgroundColor: C_TEALLL + 'bb', borderColor: C_TEALLL, borderWidth: 1, borderRadius: 4 },
     ]);
 
-    /* 12 — Barras: escala de eficácia de ações educativas */
+    /* Barras: escala de eficácia de ações educativas */
     P.bar('chartAcoesEdu',
       ['1 — Discordo totalmente','2','3 — Neutro','4','5 — Concordo totalmente'],
       [1,2,3,4,5].map(v => data.filter(r => String(r.acoesEdu_raw).trim() === String(v)).length),
@@ -640,11 +718,10 @@ const Dashboard = (() => {
     );
   }
 
-  /* ── Métricas de escala (limpeza e eficácia) ── */
+  /* ── Gauges ── */
   function renderScaleMetrics(data) {
     const mediaLimpeza = avg(data, 'limpeza_raw');
     const mediaEdu     = avg(data, 'acoesEdu_raw');
-
     renderGauge('gaugeLimpeza', mediaLimpeza, 5,
       'Média — Qualidade ambiental do entorno', '1=Muito ruim · 5=Excelente');
     renderGauge('gaugeEdu', mediaEdu, 5,
@@ -654,17 +731,17 @@ const Dashboard = (() => {
   function renderGauge(id, value, max, title, sub) {
     const el = document.getElementById(id);
     if (!el) return;
-    const val  = parseFloat(value) || 0;
-    const pct2 = Math.round((val / max) * 100);
+    const val   = parseFloat(value) || 0;
+    const pct2  = Math.round((val / max) * 100);
     const color = val >= 4 ? '#34d399' : val >= 3 ? '#f59e0b' : '#f87171';
     el.innerHTML = `
       <div class="gauge-wrap">
         <div class="gauge-title">${title}</div>
-        <div class="gauge-ring" style="--pct:${pct2};--color:${color}">
+        <div class="gauge-ring">
           <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
             <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="7"/>
             <circle cx="40" cy="40" r="30" fill="none" stroke="${color}" stroke-width="7"
-              stroke-dasharray="${2 * Math.PI * 30}" 
+              stroke-dasharray="${2 * Math.PI * 30}"
               stroke-dashoffset="${2 * Math.PI * 30 * (1 - pct2 / 100)}"
               stroke-linecap="round" transform="rotate(-90 40 40)"
               style="transition:stroke-dashoffset 1.2s ease"/>
@@ -699,15 +776,13 @@ const Dashboard = (() => {
       </div>`).join('');
   }
 
-  /* ── Tabela de respostas recentes (anonimizada) ── */
+  /* ── Tabela recente ── */
   function renderTable(data) {
     const el = document.getElementById('tableBody');
     if (!el) return;
     const recent = [...data].reverse().slice(0, 15);
 
-    function tag(text, cls) {
-      return `<span class="tag tag-${cls}">${text}</span>`;
-    }
+    function tag(text, cls) { return `<span class="tag tag-${cls}">${text}</span>`; }
     function tagKnow(v) {
       if (norm(v).includes('conheco bem') || norm(v).includes('conheço bem')) return tag('Sim','pos');
       if (norm(v).includes('nunca')) return tag('Nunca ouviu','neg');
@@ -715,9 +790,9 @@ const Dashboard = (() => {
     }
     function tagRec(v) {
       const n = norm(v);
-      if (n.includes('sempre'))      return tag('Sempre','pos');
-      if (n.includes('nunca'))       return tag('Nunca','neg');
-      if (n.includes('raramente'))   return tag('Raramente','neg');
+      if (n.includes('sempre'))        return tag('Sempre','pos');
+      if (n.includes('nunca'))         return tag('Nunca','neg');
+      if (n.includes('raramente'))     return tag('Raramente','neg');
       if (n.includes('frequentemente')) return tag('Frequente','pos');
       return tag('Às vezes','mid');
     }
@@ -747,7 +822,7 @@ const Dashboard = (() => {
       </tr>`).join('');
   }
 
-  /* ── Seções visíveis após carregamento ── */
+  /* ── Visibilidade de seções ── */
   function showSections(show) {
     ['chartsSection','chartsSection2','chartsSection3',
      'scaleSection','bairrosCard','tableCard','insightBar'
@@ -757,7 +832,6 @@ const Dashboard = (() => {
     });
   }
 
-  /* ── setText helper ── */
   function setText(id, val) {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
@@ -770,7 +844,6 @@ const Dashboard = (() => {
       showSections(false);
       return;
     }
-
     renderKPIs(data);
     renderInsights(data);
     renderCharts(data);
@@ -780,7 +853,8 @@ const Dashboard = (() => {
     showSections(true);
 
     document.getElementById('dashStatusDot').classList.add('active');
-    setText('dashStatusText', `${data.length} resposta${data.length !== 1 ? 's' : ''} carregada${data.length !== 1 ? 's' : ''}`);
+    setText('dashStatusText',
+      `${data.length} resposta${data.length !== 1 ? 's' : ''} carregada${data.length !== 1 ? 's' : ''}`);
     setText('dashUpdated', 'Atualizado: ' + new Date().toLocaleString('pt-BR'));
   }
 
@@ -791,15 +865,15 @@ const Dashboard = (() => {
     if (text) text.textContent = msg;
   }
 
-  /* ── API pública ── */
   return { render, setStatus, setText };
 })();
 
 /* ─────────────────────────────────────────────────────────────
-   6. AUTO-REFRESH  —  Ciclo automático + countdown
+   6. AUTO-REFRESH
+   CORREÇÃO: removido o `setInterval(() => {}, REFRESH_INTERVAL)`
+   que era dead code — o ciclo real já é gerenciado pelo countdown.
 ───────────────────────────────────────────────────────────── */
 const AutoRefresh = (() => {
-  let timer = null;
   let countdown = null;
   let remaining = REFRESH_INTERVAL;
 
@@ -807,14 +881,14 @@ const AutoRefresh = (() => {
     if (!silent) {
       Dashboard.setStatus('Carregando dados…', false);
     }
-
     try {
       const data = await DataLayer.fetch();
       Dashboard.render(data);
       resetCountdown();
     } catch (err) {
-      Dashboard.setStatus('Erro ao carregar dados. Tentando novamente em breve…', false);
-      console.error('[Dashboard] Erro ao buscar dados:', err);
+      Dashboard.setStatus('⚠ ' + err.message, false);
+      console.error('[Dashboard] Erro:', err);
+      resetCountdown();
     }
   }
 
@@ -841,20 +915,14 @@ const AutoRefresh = (() => {
   }
 
   function init() {
-    /* Botão de atualização manual */
     const btn = document.getElementById('refreshBtn');
     if (btn) btn.addEventListener('click', () => load(false));
 
-    /* Atualizar link do Forms */
     document.querySelectorAll('[data-forms-url]').forEach(el => {
       el.href = FORMS_URL;
     });
 
-    /* Carregar ao iniciar */
     load(false);
-
-    /* Auto-refresh em background */
-    timer = setInterval(() => {}, REFRESH_INTERVAL);
   }
 
   return { init, load };
@@ -865,7 +933,6 @@ const AutoRefresh = (() => {
 ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* Smooth scroll para links âncora */
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const target = document.querySelector(a.getAttribute('href'));
@@ -878,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Aguardar Chart.js carregar antes do dashboard */
   function waitForChart(retries = 20) {
     if (window.Chart) {
       AutoRefresh.init();
