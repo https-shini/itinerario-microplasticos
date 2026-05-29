@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Projeto extensionista sobre a hiper poluição do microplástico nos litorais brasileiros — UCS 2026" />
+  <title>Microplásticos · Projeto Extensionista UCS 2026</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-brand">
+        <span class="nav-brand-dot"></span>
+        Microplásticos
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#sobre" class="nav-link">O que são</a></li>
+        <li><a href="#impactos" class="nav-link">Impactos</a></li>
+        <li><a href="#projeto" class="nav-link">Projeto</a></li>
+        <li><a href="#participar" class="nav-link">Participar</a></li>
+        <li><a href="#dashboard" class="nav-link nav-link-dash">Dashboard</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ═══════════════ HERO ═══════════════ -->
+    <section id="hero" class="hero">
+      <div class="hero-bg-grid"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow reveal-up">Projeto Extensionista · Universidade Cruzeiro do Sul · 2026</p>
+        <h1 class="hero-title reveal-up delay-1">
+          A Hiper Poluição do<br />
+          <em>Microplástico</em><br />
+          nos Litorais Brasileiros
+        </h1>
+        <p class="hero-subtitle reveal-up delay-2">
+          Partículas invisíveis com impactos imensuráveis. Uma pesquisa extensionista 
+          de conscientização comunitária no Ecoponto Pantojo, zona leste de São Paulo.
+        </p>
+        <div class="hero-actions reveal-up delay-3">
+          <a href="#projeto" class="btn btn-primary">Conhecer o projeto</a>
+          <a href="#participar" class="btn btn-ghost">Participar da pesquisa</a>
+        </div>
+        <div class="hero-stats reveal-up delay-4">
+          <div class="hero-stat">
+            <strong>&lt;5mm</strong>
+            <span>tamanho máximo</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <strong>4°</strong>
+            <span>BR no ranking mundial</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <strong>1%</strong>
+            <span>do plástico é reciclado</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <strong>750</strong>
+            <span>praias mapeadas (MicroMar)</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-scroll-hint">
+        <span>rolar para explorar</span>
+        <div class="hero-scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ O QUE SÃO ═══════════════ -->
+    <section id="sobre" class="section section-light">
+      <div class="container">
+        <div class="section-header reveal-up">
+          <p class="section-eyebrow">Entenda o problema</p>
+          <h2 class="section-title">O que são microplásticos?</h2>
+          <p class="section-lead">
+            Microplásticos são partículas sólidas de plástico menores que 5 milímetros de diâmetro. 
+            Invisíveis a olho nu, já foram encontrados em oceanos, rios, solo, ar, alimentos e até 
+            no sangue humano e na placenta de recém-nascidos.
+          </p>
+        </div>
+
+        <div class="cards-grid-3 mt-lg">
+          <div class="info-card reveal-up delay-1">
+            <div class="info-card-icon">🔬</div>
+            <h3>Origem do termo</h3>
+            <p>
+              O termo "microplástico" foi introduzido em 2004 em razão do crescimento das preocupações 
+              ecológicas. Em 2020, a OCDE publicou definição formal: qualquer partícula plástica sólida 
+              insolúvel com dimensões entre 1 µm e 5 mm.
+            </p>
+          </div>
+          <div class="info-card reveal-up delay-2">
+            <div class="info-card-icon">🏭</div>
+            <h3>Primários</h3>
+            <p>
+              Fabricados intencionalmente em microescala para uso industrial ou em produtos de consumo. 
+              Incluem microesferas em cosméticos, esfoliantes, cremes dentais e outros produtos de 
+              higiene pessoal — presentes em 83% dos desinfetantes testados.
+            </p>
+          </div>
+          <div class="info-card reveal-up delay-3">
+            <div class="info-card-icon">⚗️</div>
+            <h3>Secundários</h3>
+            <p>
+              Resultam da fragmentação de plásticos maiores por exposição a raios UV, vento e ondas. 
+              Uma vez gerados, tornam-se impossíveis de remover do ambiente. Roupas sintéticas sozinhas 
+              representam 9% das perdas anuais de microplásticos para o oceano.
+            </p>
+          </div>
+        </div>
+
+        <div class="two-col mt-xl reveal-up">
+          <div class="two-col-visual">
+            <div class="quote-card">
+              <blockquote>
+                "Os oceanos são um reflexo de nossas ações; o plástico que encontramos neles 
+                é um lembrete de que precisamos mudar."
+              </blockquote>
+              <cite>— Jean-Michel Cousteau</cite>
+            </div>
+            <div class="data-highlight-card">
+              <div class="dh-number">269.000</div>
+              <div class="dh-label">toneladas de microplásticos estimadas nos oceanos atualmente</div>
+              <div class="dh-sub">equivalente a 5,25 trilhões de partículas</div>
+            </div>
+          </div>
+          <div class="two-col-content">
+            <h3>Fontes cotidianas</h3>
+            <p>
+              Os microplásticos estão presentes em itens do dia a dia que a maioria das pessoas 
+              desconhece. Os principais vetores incluem:
+            </p>
+            <ul class="source-list">
+              <li>
+                <span class="source-tag">Cigarros</span>
+                <span>Seis trilhões de cigarros consumidos por ano por 1 bilhão de fumantes. 
+                As bitucas são o lixo plástico mais comum nas praias, liberando fibras de 
+                acetato de celulose.</span>
+              </li>
+              <li>
+                <span class="source-tag">Roupas sintéticas</span>
+                <span>Poliéster, acrílico e nylon compõem 60% de todo vestuário. Cada lavagem 
+                libera microfibras que chegam ao oceano.</span>
+              </li>
+              <li>
+                <span class="source-tag">Cosméticos</span>
+                <span>Esfoliantes, cremes e sabonetes podem conter mais de 10% de microesferas 
+                em peso. Um único banho com esfoliante plástico libera até 100.000 esferas.</span>
+              </li>
+              <li>
+                <span class="source-tag">Embalagens</span>
+                <span>A degradação de embalagens descartáveis — o Brasil produz 500 bilhões 
+                por ano — gera microplásticos secundários em solos, rios e mares.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ IMPACTOS ═══════════════ -->
+    <section id="impactos" class="section section-dark">
+      <div class="container">
+        <div class="section-header section-header-light reveal-up">
+          <p class="section-eyebrow">Consequências</p>
+          <h2 class="section-title">Impactos em múltiplas dimensões</h2>
+          <p class="section-lead">
+            A poluição por microplásticos afeta simultaneamente ecossistemas, saúde humana 
+            e economia — com efeitos que se amplificam ao longo da cadeia alimentar.
+          </p>
+        </div>
+
+        <div class="impact-grid mt-lg">
+          <div class="impact-card reveal-up delay-1">
+            <div class="impact-number">01</div>
+            <h3>Fauna marinha</h3>
+            <p>
+              Microplásticos já foram detectados em mais de 100 espécies animais. Baleias, 
+              arraias e tubarões-frade, que se alimentam de plâncton, ingerem enormes 
+              quantidades. Os aditivos plásticos atuam como disruptores endócrinos, 
+              prejudicando fertilidade e em casos extremos causando desenvolvimento de 
+              ovários em animais machos.
+            </p>
+          </div>
+          <div class="impact-card reveal-up delay-2">
+            <div class="impact-number">02</div>
+            <h3>Saúde humana</h3>
+            <p>
+              Microplásticos foram encontrados no sangue de 80% das pessoas testadas em 
+              estudo recente, além de pulmões, fígado e placenta de recém-nascidos. 
+              Absorvidos via ingestão, inalação e contato dérmico, acumulam-se em órgãos 
+              e podem atuar como compostos desreguladores endócrinos (CPE), alterando 
+              o funcionamento hormonal.
+            </p>
+          </div>
+          <div class="impact-card reveal-up delay-3">
+            <div class="impact-number">03</div>
+            <h3>Cadeia alimentar</h3>
+            <p>
+              Mariscos: até 11.000 partículas de plástico por ano, segundo estudo belga de 
+              2017. A contaminação passa do plâncton aos peixes, dos peixes às aves, das 
+              aves aos predadores e chega ao prato humano. Em 2023, microplásticos foram 
+              detectados em água potável, frutas do mar comerciais e até no ar que respiramos.
+            </p>
+          </div>
+          <div class="impact-card reveal-up delay-1">
+            <div class="impact-number">04</div>
+            <h3>Impacto econômico</h3>
+            <p>
+              O Brasil contribui com pelo menos 325 mil toneladas de resíduos plásticos ao 
+              mar por ano. Segundo a Fundação Ellen MacArthur, o custo econômico da poluição 
+              plástica é de até R$165 mil por tonelada, resultando em uma perda de 
+              aproximadamente <strong>R$53 bilhões anuais</strong> para o Brasil — afetando 
+              diretamente turismo e pesca.
+            </p>
+          </div>
+          <div class="impact-card reveal-up delay-2">
+            <div class="impact-number">05</div>
+            <h3>Grande Ilha de Plástico</h3>
+            <p>
+              No Oceano Pacífico existe uma concentração de plásticos com extensão mínima 
+              estimada de 700.000 km². Bactérias e algas colonizam os microplásticos, 
+              tornando-os mais pesados e fazendo-os afundar — poluindo regiões do fundo 
+              oceânico antes consideradas intocadas.
+            </p>
+          </div>
+          <div class="impact-card reveal-up delay-3">
+            <div class="impact-number">06</div>
+            <h3>Projeção 2040</h3>
+            <p>
+              A quantidade de plástico adicionada ao lixo existente pode mais que dobrar: 
+              de 188 milhões (2016) para 380 milhões de toneladas em 2040. Cerca de 
+              10 milhões de toneladas nessa forma de microplásticos. A transição para 
+              economia circular pode reduzir drasticamente esse cenário se implementada 
+              com urgência.
+            </p>
+          </div>
+        </div>
+
+        <!-- Legislação -->
+        <div class="legislation-strip mt-xl reveal-up">
+          <h3>Marcos legislativos no Brasil</h3>
+          <div class="leg-items">
+            <div class="leg-item">
+              <span class="leg-year">2016</span>
+              <div>
+                <strong>PL 6528-A</strong>
+                <p>Proposto por Mario Heringer (PDT/MG), proíbe fabricação, importação e 
+                comercialização de produtos de higiene pessoal com microesferas plásticas 
+                em todo o território nacional.</p>
+              </div>
+            </div>
+            <div class="leg-item">
+              <span class="leg-year">2022</span>
+              <div>
+                <strong>PL 2524 — Oceano sem Plástico</strong>
+                <p>Senador Jean-Paul Prates (PT/RN). Propõe economia circular para reduzir 
+                lixo plástico marinho. Prevê substituição de apenas 20% das embalagens 
+                descartáveis gera potencial de negócios de US$10 bilhões.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ INICIATIVAS ═══════════════ -->
+    <section class="section section-light">
+      <div class="container">
+        <div class="section-header reveal-up">
+          <p class="section-eyebrow">Quem já age</p>
+          <h2 class="section-title">Iniciativas de combate à poluição plástica</h2>
+          <p class="section-lead">
+            Diversas iniciativas científicas, tecnológicas, legislativas e comunitárias 
+            já atuam no combate à poluição por microplásticos. Conhecê-las orienta as 
+            boas práticas e erros a evitar.
+          </p>
+        </div>
+
+        <div class="initiatives-list mt-lg">
+          <div class="initiative-item reveal-up">
+            <div class="init-badge">🔬 Ciência</div>
+            <div class="init-body">
+              <h3>Projeto MicroMar — UFSC</h3>
+              <p>O mais abrangente estudo sobre microplásticos no litoral brasileiro, com 
+              6.700 amostras coletadas em 750 praias de 300 municípios. Coordenado com 
+              apoio do CNPq e do Ministério de Ciência e Tecnologia.</p>
+            </div>
+          </div>
+          <div class="initiative-item reveal-up delay-1">
+            <div class="init-badge">🌐 Global</div>
+            <div class="init-body">
+              <h3>Projeto GloLitter — OMI/ONU</h3>
+              <p>Iniciativa internacional presente em 30 países para reduzir plástico marinho. 
+              O Brasil é um dos 10 países parceiros líderes, recebendo ferramentas, 
+              treinamentos e metodologias de monitoramento e combate.</p>
+            </div>
+          </div>
+          <div class="initiative-item reveal-up delay-2">
+            <div class="init-badge">🚀 Inovação</div>
+            <div class="init-body">
+              <h3>Ocean Ride — Cafeína Team / NASA Hackathon 2019</h3>
+              <p>Cinco universitários baianos (UFBA e Ucsal) criaram o Ocean Ride: equipamento 
+              baseado no gerador Van De Graaff que atrai microplásticos por corrente 
+              eletrostática. Pode ser acoplado a embarcações e plataformas de petróleo — 
+              simples, barato e eficiente.</p>
+            </div>
+          </div>
+          <div class="initiative-item reveal-up delay-1">
+            <div class="init-badge">📢 Educação</div>
+            <div class="init-body">
+              <h3>Campanha Não Jogue Fora</h3>
+              <p>Movimento de conscientização que organiza mutirões de limpeza em praias, 
+              oficinas educativas e palestras sobre descarte responsável, articulando ONGs, 
+              escolas e empresas em ação coordenada.</p>
+            </div>
+          </div>
+          <div class="initiative-item reveal-up delay-2">
+            <div class="init-badge">🏭 Indústria</div>
+            <div class="init-body">
+              <h3>Compromisso ABIHPEC — Cosméticos</h3>
+              <p>A Associação Brasileira da Indústria de Higiene Pessoal, Perfumaria e 
+              Cosméticos firmou compromisso voluntário de eliminar micropartículas plásticas 
+              sólidas (MPSIs) dos produtos, substituindo-as por alternativas biodegradáveis 
+              como derivados de celulose, sementes e carbonato de cálcio.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ PROJETO ═══════════════ -->
+    <section id="projeto" class="section section-teal">
+      <div class="container">
+        <div class="section-header section-header-light reveal-up">
+          <p class="section-eyebrow">Sobre este trabalho</p>
+          <h2 class="section-title">O projeto extensionista</h2>
+          <p class="section-lead">
+            Desenvolvido na Universidade Cruzeiro do Sul em 2026 como Itinerário Extensionista, 
+            baseado no TCC "A Hiper Poluição do Microplástico nos Litorais Brasileiros" 
+            (ETEC Vila Formosa, 2024).
+          </p>
+        </div>
+
+        <div class="project-meta-grid mt-lg reveal-up">
+          <div class="project-meta-card">
+            <h4>Instituição</h4>
+            <p>Universidade Cruzeiro do Sul — UCS<br />Curso de Ciência da Computação<br />Itinerário Extensionista · 2026</p>
+          </div>
+          <div class="project-meta-card">
+            <h4>Base científica</h4>
+            <p>TCC — ETEC Vila Formosa, 2024<br />Autoras: Bruna da Silva Santana, Iris de Vilhena Ortiz,<br />Natalie Montana Marcusso, Vivian Ferreira Sposito de Lima<br />Orientador: Prof. Bruno Santos de Almeida</p>
+          </div>
+          <div class="project-meta-card">
+            <h4>Local de intervenção</h4>
+            <p>Ecoponto Pantojo<br />Rua Pantojo, 1147 · Vila Reg. Feijó<br />São Paulo — SP · CEP 03343-000</p>
+          </div>
+          <div class="project-meta-card">
+            <h4>ODS principal</h4>
+            <p>ODS 12 — Consumo e produção responsáveis<br />Relacionados: ODS 3, 4, 11, 13 e 14</p>
+          </div>
+        </div>
+
+        <div class="two-col two-col-reverse mt-xl">
+          <div class="two-col-content reveal-up">
+            <h3>Objetivos</h3>
+            <ol class="numbered-list">
+              <li>
+                <strong>Conscientizar a comunidade</strong>
+                <span>Levar informações científicas sobre microplásticos em linguagem acessível para 
+                moradores do entorno do Ecoponto Pantojo.</span>
+              </li>
+              <li>
+                <strong>Mapear hábitos locais</strong>
+                <span>Coletar dados primários sobre reciclagem e percepção ambiental da comunidade 
+                por meio de formulário online.</span>
+              </li>
+              <li>
+                <strong>Propor mudanças práticas</strong>
+                <span>Indicar substituições acessíveis de produtos com microplásticos por alternativas 
+                sustentáveis viáveis para a realidade local.</span>
+              </li>
+              <li>
+                <strong>Produzir documentário fotográfico</strong>
+                <span>Registrar a realidade do entorno do Ecoponto e a intervenção para análise 
+                e divulgação acadêmica.</span>
+              </li>
+            </ol>
+          </div>
+          <div class="two-col-visual reveal-up delay-1">
+            <div class="methodology-card">
+              <h3>Metodologia</h3>
+              <div class="method-steps">
+                <div class="method-step">
+                  <div class="method-step-icon">📚</div>
+                  <div>
+                    <strong>Revisão bibliográfica</strong>
+                    <p>PNUMA, UFSC, CNPq, Google Acadêmico, SciELO e legislação vigente.</p>
+                  </div>
+                </div>
+                <div class="method-step">
+                  <div class="method-step-icon">📍</div>
+                  <div>
+                    <strong>Pesquisa de campo</strong>
+                    <p>Documentação fotográfica no Ecoponto Pantojo e entorno.</p>
+                  </div>
+                </div>
+                <div class="method-step">
+                  <div class="method-step-icon">📋</div>
+                  <div>
+                    <strong>Coleta de dados</strong>
+                    <p>Formulário online via Google Forms com a comunidade local.</p>
+                  </div>
+                </div>
+                <div class="method-step">
+                  <div class="method-step-icon">📊</div>
+                  <div>
+                    <strong>Análise e dashboard</strong>
+                    <p>Visualização em tempo real das respostas coletadas.</p>
+                  </div>
+                </div>
+                <div class="method-step">
+                  <div class="method-step-icon">🎯</div>
+                  <div>
+                    <strong>Intervenção educativa</strong>
+                    <p>Painéis informativos no Ecoponto e publicação dos resultados.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ PARTICIPAR ═══════════════ -->
+    <section id="participar" class="section section-light">
+      <div class="container">
+        <div class="section-header reveal-up">
+          <p class="section-eyebrow">Contribua com a pesquisa</p>
+          <h2 class="section-title">Participe da pesquisa</h2>
+          <p class="section-lead">
+            Sua participação é fundamental para mapear os hábitos e a percepção ambiental 
+            da comunidade. O formulário é gratuito, anônimo e leva menos de 3 minutos.
+          </p>
+        </div>
+
+        <div class="participate-layout mt-lg">
+          <div class="participate-info reveal-up">
+            <h3>O que você vai responder</h3>
+            <p>Perguntas objetivas sobre seu conhecimento sobre microplásticos, hábitos de 
+            reciclagem e percepção do ambiente ao redor da sua residência.</p>
+            <ul class="question-preview">
+              <li><span class="qp-num">01</span> Você já ouviu falar em microplásticos?</li>
+              <li><span class="qp-num">02</span> Com qual frequência você separa o lixo para reciclagem?</li>
+              <li><span class="qp-num">03</span> Como avalia a limpeza do ambiente próximo à sua residência?</li>
+              <li><span class="qp-num">04</span> Há pontos de descarte irregular perto de onde você mora?</li>
+              <li><span class="qp-num">05</span> Qual é o seu bairro e faixa etária?</li>
+            </ul>
+
+            <div class="participation-badges">
+              <div class="p-badge"><span>🔒</span> Anônimo</div>
+              <div class="p-badge"><span>⏱</span> &lt; 3 minutos</div>
+              <div class="p-badge"><span>🎓</span> Fins acadêmicos</div>
+              <div class="p-badge"><span>📱</span> Funciona no celular</div>
+            </div>
+          </div>
+
+          <div class="participate-cta reveal-up delay-2">
+            <div class="cta-card">
+              <div class="cta-card-icon">📝</div>
+              <h3>Formulário de pesquisa</h3>
+              <p>Clique abaixo para acessar o formulário via Google Forms. 
+              Suas respostas alimentam o dashboard de dados em tempo real.</p>
+              <!-- SUBSTITUA O HREF PELO LINK REAL DO SEU GOOGLE FORMS -->
+              <a href="https://forms.gle/SUBSTITUA-AQUI" target="_blank" rel="noopener" class="btn btn-primary btn-large" id="formsBtn">
+                Responder o formulário →
+              </a>
+              <p class="cta-note">
+                Ao clicar, você será redirecionado ao Google Forms.<br />
+                Nenhum dado de identificação é coletado.
+              </p>
+              <a href="#dashboard" class="cta-link-dash">Ver resultados parciais ↓</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ DASHBOARD ═══════════════ -->
+    <section id="dashboard" class="section section-dark">
+      <div class="container">
+        <div class="section-header section-header-light reveal-up">
+          <p class="section-eyebrow">Dados em tempo real</p>
+          <h2 class="section-title">Dashboard da pesquisa</h2>
+          <p class="section-lead">
+            Acompanhe as respostas coletadas pelo formulário de pesquisa. 
+            Para carregar dados reais, conecte o Google Sheets publicado abaixo.
+          </p>
+        </div>
+
+        <!-- Config banner -->
+        <div class="dash-config reveal-up">
+          <div class="dash-config-icon">🔗</div>
+          <div class="dash-config-text">
+            <strong>Conectar ao Google Forms</strong>
+            <p>No Google Sheets vinculado ao seu Forms: <em>Arquivo → Compartilhar → Publicar na web → CSV</em> e cole o link abaixo.</p>
+          </div>
+          <div class="dash-config-actions">
+            <input type="text" id="csvUrl" class="csv-input" placeholder="URL do Google Sheets como CSV..." />
+            <button class="btn btn-primary btn-sm" id="loadCsvBtn">Carregar</button>
+            <button class="btn btn-ghost btn-sm" id="loadDemoBtn">Demo</button>
+          </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="dash-status reveal-up" id="dashStatus">
+          <div class="dash-status-dot" id="dashStatusDot"></div>
+          <span id="dashStatusText">Aguardando conexão</span>
+          <span class="dash-updated" id="dashUpdated"></span>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total de respostas</div>
+            <div class="kpi-value" id="kpiTotal">—</div>
+            <div class="kpi-sub">participantes</div>
+          </div>
+          <div class="kpi-card kpi-amber">
+            <div class="kpi-label">Não conheciam MPs</div>
+            <div class="kpi-value" id="kpiDesconhece">—</div>
+            <div class="kpi-sub">antes do projeto</div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-label">Reciclam sempre</div>
+            <div class="kpi-value" id="kpiRecicla">—</div>
+            <div class="kpi-sub">dos participantes</div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <div class="kpi-label">Bairro poluído</div>
+            <div class="kpi-value" id="kpiPoluido">—</div>
+            <div class="kpi-sub">relataram poluição</div>
+          </div>
+        </div>
+
+        <!-- Insight bar -->
+        <div class="insight-bar" id="insightBar" style="display:none">
+          <div class="insight-item insight-warn" id="ins1"></div>
+          <div class="insight-item insight-good" id="ins2"></div>
+          <div class="insight-item insight-info" id="ins3"></div>
+        </div>
+
+        <!-- Charts grid -->
+        <div class="charts-grid" id="chartsSection" style="display:none">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h4>Conhecimento sobre microplásticos</h4>
+              <p>Nível declarado de conhecimento dos participantes</p>
+            </div>
+            <div class="chart-wrap"><canvas id="chartConhecimento"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h4>Hábitos de reciclagem</h4>
+              <p>Frequência de separação do lixo para reciclagem</p>
+            </div>
+            <div class="chart-wrap"><canvas id="chartReciclagem"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h4>Percepção de limpeza do bairro</h4>
+              <p>Como os moradores avaliam o ambiente ao redor</p>
+            </div>
+            <div class="chart-wrap"><canvas id="chartLimpeza"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h4>Descarte irregular próximo</h4>
+              <p>Presença de pontos irregulares na região</p>
+            </div>
+            <div class="chart-wrap"><canvas id="chartDescarte"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h4>Distribuição por faixa etária</h4>
+              <p>Perfil demográfico dos participantes</p>
+            </div>
+            <div class="chart-wrap"><canvas id="chartIdade"></canvas></div>
+          </div>
+          <div class="chart-card chart-card-wide">
+            <div class="chart-card-header">
+              <h4>Respostas ao longo do tempo</h4>
+              <p>Acúmulo de participações desde a abertura do formulário</p>
+            </div>
+            <div class="chart-wrap chart-wrap-tall"><canvas id="chartTempo"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Top bairros -->
+        <div class="bairros-card" id="bairrosCard" style="display:none">
+          <h4>Bairros mais representados</h4>
+          <div id="bairrosList" class="bairros-list"></div>
+        </div>
+
+        <!-- Tabela recentes -->
+        <div class="table-card" id="tableCard" style="display:none">
+          <h4>Respostas recentes</h4>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Bairro</th>
+                  <th>Faixa etária</th>
+                  <th>Conhecia MPs</th>
+                  <th>Reciclagem</th>
+                  <th>Limpeza do bairro</th>
+                  <th>Descarte irregular</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">Microplásticos</div>
+          <p>Projeto Extensionista desenvolvido na Universidade Cruzeiro do Sul — 2026, 
+          com base no TCC produzido na ETEC Vila Formosa em 2024.</p>
+        </div>
+        <div class="footer-nav">
+          <strong>Navegação</strong>
+          <a href="#sobre">O que são</a>
+          <a href="#impactos">Impactos</a>
+          <a href="#projeto">Projeto</a>
+          <a href="#participar">Participar</a>
+          <a href="#dashboard">Dashboard</a>
+        </div>
+        <div class="footer-info">
+          <strong>Intervenção local</strong>
+          <p>
+            Ecoponto Pantojo<br />
+            Rua Pantojo, 1147<br />
+            Vila Reg. Feijó · São Paulo — SP<br />
+            CEP 03343-000
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          TCC: Bruna da Silva Santana · Iris de Vilhena Ortiz · Natalie Montana Marcusso · 
+          Vivian Ferreira Sposito de Lima · Orientador: Prof. Bruno Santos de Almeida
+        </p>
+        <p>Extensionista: UCS 2026 · Ciência da Computação</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
