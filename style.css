@@ -777,3 +777,25 @@ tr:hover td { background: rgba(255,255,255,.03); color: rgba(255,255,255,.8); }
 @media (max-width: 860px) {
   .charts-grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ── Formulário embedado ── */
+.forms-embed-wrap {
+  background: var(--ocean-soft);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-top: 2rem;
+  /* Impede overflow horizontal em mobile */
+  max-width: 100%;
+}
+.forms-embed-wrap iframe {
+  display: block;
+  width: 100%;
+  min-height: 1980px;
+  border: none;
+  background: #fff;
+}
+/* Em mobile, ajusta altura para não ter scroll interno */
+@media (max-width: 640px) {
+  .forms-embed-wrap iframe { min-height: 2400px; }
+}
