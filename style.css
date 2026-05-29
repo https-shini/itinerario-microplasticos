@@ -713,3 +713,67 @@ tr:hover td { background: rgba(255,255,255,.03); color: rgba(255,255,255,.8); }
   .dash-config-actions { flex-direction: column; align-items: stretch; }
   .csv-input { min-width: unset; }
 }
+
+/* ─────────────────────────────────────────────
+   ADIÇÕES — Dashboard automático
+───────────────────────────────────────────── */
+
+/* KPI extra — azul */
+.kpi-blue .kpi-value { color: #60a5fa; }
+
+/* Countdown bar */
+.refresh-countdown {
+  font-size: .75rem; color: rgba(255,255,255,.25);
+  margin-bottom: 1.25rem; min-height: 1rem;
+  letter-spacing: .03em;
+}
+
+/* Bloco title separator */
+.dash-block-title {
+  font-size: .72rem; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--teal-light);
+  opacity: .6; margin: 2rem 0 .9rem;
+  padding-left: .1rem;
+}
+
+/* Charts grid 2 colunas */
+.charts-grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1.25rem; margin-bottom: 1.25rem;
+}
+
+/* Chart card full width */
+.chart-card-full { margin-bottom: 1.25rem; }
+
+/* Chart wrap sizes */
+.chart-wrap-md  { position: relative; height: 260px; }
+.chart-wrap-lg  { position: relative; height: 320px; }
+
+/* Gauge component */
+.gauge-container { padding: .5rem; }
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: 1.25rem .5rem; }
+.gauge-title { font-size: .85rem; font-weight: 500; color: rgba(255,255,255,.7); text-align: center; line-height: 1.4; }
+.gauge-ring {
+  position: relative; width: 120px; height: 120px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gauge-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gauge-center {
+  display: flex; align-items: baseline; gap: 1px;
+  position: relative; z-index: 1;
+}
+.gauge-value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; line-height: 1; }
+.gauge-max   { font-size: .9rem; color: rgba(255,255,255,.3); }
+.gauge-sub   { font-size: .76rem; color: rgba(255,255,255,.35); text-align: center; max-width: 200px; line-height: 1.5; }
+
+/* Dashboard status dot */
+.dash-status {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: .82rem; color: rgba(255,255,255,.45);
+  margin-bottom: .4rem; flex-wrap: wrap;
+}
+
+/* Responsive dashboard */
+@media (max-width: 860px) {
+  .charts-grid-2 { grid-template-columns: 1fr; }
+}
